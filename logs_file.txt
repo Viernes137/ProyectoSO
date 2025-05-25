@@ -1,0 +1,2 @@
+[2025-05-24 18:01:01] Archivo 'qq' creado por root.
+[2025-05-24 18:01:12] root leyó el archivo 'qq'.

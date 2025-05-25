@@ -1,6 +1,6 @@
 from datetime import datetime
 
-LOG_FILE = "logs.txt"
+LOG_FILE = "/home/vi3rn35/Documents/Escuela/3er semestre/SO/proyecto_final/logs_file.txt"
 
 def escribir_log(mensaje):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

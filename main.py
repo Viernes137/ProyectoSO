@@ -1,6 +1,5 @@
 import os
-# main.py
-from login import login, get_usuario_actual, tiene_permisos_root
+from login import login, get_usuario_actual, tiene_permisos_root,mod_usuarios
 import procesos 
 import planificador
 import archivos
@@ -32,6 +31,8 @@ def main():
         elif opcion == "4":
             logs.mostrar_logs()
         elif opcion == "5":
+            mod_usuarios(tiene_permisos_root())
+        elif opcion == "6":
             print("Saliendo del sistema...")
             break
         else:

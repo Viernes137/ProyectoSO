@@ -1,0 +1,3 @@
+root:toor
+bruno:1234
+fifi:fifi
