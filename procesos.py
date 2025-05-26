@@ -7,7 +7,7 @@ from datetime import datetime
 from planificador import agregar_proceso
 
 # Diccionario para almacenar los procesos del sistema
-procesos_sistema = {}
+procesos_sistema = []
 contador_pid = 1000  # Contador para generar PIDs únicos
 
 def administrar_procesos():
@@ -18,11 +18,10 @@ def administrar_procesos():
         print("2. Listar procesos")
         print("3. Ver detalles de proceso")
         print("4. Terminar proceso")
-        print("5. Cambiar prioridad")
-        print("6. Pausar proceso")
-        print("7. Reanudar proceso")
-        print("8. Monitor de sistema")
-        print("9. Volver al menú principal")
+        print("5. Pausar proceso")
+        print("6. Reanudar proceso")
+        print("7. Monitor de sistema")
+        print("8. Volver al menú principal")
         
         opcion = input("Elige una opción: ")
         
@@ -35,14 +34,12 @@ def administrar_procesos():
         elif opcion == "4":
             terminar_proceso()
         elif opcion == "5":
-            cambiar_prioridad()
-        elif opcion == "6":
             pausar_proceso()
-        elif opcion == "7":
+        elif opcion == "6":
             reanudar_proceso()
-        elif opcion == "8":
+        elif opcion == "7":
             monitor_sistema()
-        elif opcion == "9":
+        elif opcion == "8":
             break
         else:
             print("Opción no válida.")
@@ -53,26 +50,9 @@ def crear_proceso():
     
     nombre = input("Nombre del proceso: ")
     comando = input("Comando/ruta del programa: ")
-    prioridad = input("Prioridad (1-10, por defecto 5): ") or "5"
     
     # Preguntar si se quiere agregar a la cola de planificación
-    agregar_planificacion = input("¿Agregar a la cola de planificación? (s/n, por defecto n): ").lower()
-    duracion = None
-    
-    if agregar_planificacion == 's':
-        try:
-            duracion = int(input("Duración estimada en segundos: "))
-        except ValueError:
-            duracion = 5  # Valor por defecto
-            print("Duración inválida, usando 5 segundos por defecto.")
-    
-    try:
-        prioridad = int(prioridad)
-        if prioridad < 1 or prioridad > 10:
-            prioridad = 5
-    except ValueError:
-        prioridad = 5
-    
+    duracion = random.randint(1, 15)  
     usuario = get_usuario_actual()
     pid = contador_pid
     contador_pid += 1
@@ -84,7 +64,6 @@ def crear_proceso():
         'comando': comando,
         'propietario': usuario,
         'estado': 'ejecutando',
-        'prioridad': prioridad,
         'tiempo_inicio': datetime.now(),
         'cpu_uso': random.randint(1, 15),  # Simulación de uso de CPU
         'memoria_uso': random.randint(10, 500),  # MB de memoria
@@ -96,13 +75,9 @@ def crear_proceso():
     procesos_sistema[pid] = proceso
     
     # Si se eligió agregar a planificación, agregarlo también al planificador
-    if agregar_planificacion == 's':
-        agregar_proceso(pid, nombre, duracion)
-        escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario} y agregado a planificación")
-        print(f"Proceso '{nombre}' creado exitosamente con PID: {pid} y agregado a la cola de planificación")
-    else:
-        escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario}")
-        print(f"Proceso '{nombre}' creado exitosamente con PID: {pid}")
+     agregar_proceso(pid, nombre, duracion)
+     escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario} y agregado a planificación")
+     print(f"Proceso '{nombre}' creado exitosamente con PID: {pid} y agregado a la cola de planificación")
 
 def listar_procesos():
     """Lista todos los procesos del sistema"""
@@ -155,7 +130,6 @@ def ver_detalles_proceso():
     print(f"Comando: {proceso['comando']}")
     print(f"Propietario: {proceso['propietario']}")
     print(f"Estado: {proceso['estado']}")
-    print(f"Prioridad: {proceso['prioridad']}")
     print(f"Tiempo de inicio: {proceso['tiempo_inicio'].strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Uso de CPU: {proceso['cpu_uso']}%")
     print(f"Uso de memoria: {proceso['memoria_uso']} MB")
@@ -199,38 +173,6 @@ def terminar_proceso():
         escribir_log(f"{usuario} terminó el proceso '{proceso['nombre']}' (PID: {pid})")
     else:
         print("Operación cancelada.")
-
-def cambiar_prioridad():
-    """Cambia la prioridad de un proceso"""
-    try:
-        pid = int(input("PID del proceso: "))
-        nueva_prioridad = int(input("Nueva prioridad (1-10): "))
-    except ValueError:
-        print("Valores inválidos.")
-        return
-    
-    if nueva_prioridad < 1 or nueva_prioridad > 10:
-        print("La prioridad debe estar entre 1 y 10.")
-        return
-    
-    usuario = get_usuario_actual()
-    
-    if pid not in procesos_sistema:
-        print("Proceso no encontrado.")
-        return
-    
-    proceso = procesos_sistema[pid]
-    
-    # Solo root o el propietario pueden cambiar prioridad
-    if not (tiene_permisos_root() or proceso['propietario'] == usuario):
-        print("No tienes permisos para cambiar la prioridad de este proceso.")
-        escribir_log(f"ACCESO DENEGADO: {usuario} intentó cambiar prioridad del proceso PID {pid}")
-        return
-    
-    prioridad_anterior = proceso['prioridad']
-    proceso['prioridad'] = nueva_prioridad
-    print(f"Prioridad del proceso PID {pid} cambiada de {prioridad_anterior} a {nueva_prioridad}")
-    escribir_log(f"{usuario} cambió prioridad del proceso PID {pid} de {prioridad_anterior} a {nueva_prioridad}")
 
 def pausar_proceso():
     """Pausa un proceso (cambia estado a 'pausado')"""
@@ -357,7 +299,6 @@ def crear_proceso_simple():
         'comando': f'/usr/bin/{nombre}',
         'propietario': usuario,
         'estado': 'ejecutando',
-        'prioridad': 5,
         'tiempo_inicio': datetime.now(),
         'cpu_uso': random.randint(1, 15),
         'memoria_uso': random.randint(10, 500),
@@ -389,7 +330,6 @@ def inicializar_procesos_sistema():
                 'comando': proc_data['comando'],
                 'propietario': proc_data['propietario'],
                 'estado': 'ejecutando',
-                'prioridad': 1,
                 'tiempo_inicio': datetime.now(),
                 'cpu_uso': random.randint(1, 5),
                 'memoria_uso': random.randint(50, 200),
