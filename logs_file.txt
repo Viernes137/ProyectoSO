@@ -1,9 +1,0 @@
-[2025-05-24 18:01:01] Archivo 'qq' creado por root.
-[2025-05-24 18:01:12] root leyó el archivo 'qq'.
-[2025-05-25 17:24:26] Proceso 'aa' (PID: 1003) creado por root
-[2025-05-25 17:24:46] Proceso 'b' (PID: 1004) creado por root
-[2025-05-25 17:29:28] Proceso 'e' (PID: 1003) creado por root
-[2025-05-25 18:12:44] Proceso 'a' (PID: 1003) creado por root y agregado a planificación
-[2025-05-25 18:12:57] Inicio planificación FIFO
-[2025-05-25 18:12:57] Proceso 1003 ejecutándose (FIFO)
-[2025-05-25 18:12:58] Proceso 1003 finalizado (FIFO)

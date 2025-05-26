@@ -43,7 +43,6 @@ def mod_usuarios(bnd):
 2.- Crear nuevo usuario 
 --> ''')
         if config == "1":
-            print("chimichanga")
             try:
                 with open(docs, "r") as f:
                     print("\n=== usuarios ===")

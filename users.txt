@@ -1,4 +1,2 @@
 root:toor
 bruno:1234
-fifi:fifi
-1:1
