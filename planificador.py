@@ -1,9 +1,4 @@
 
-
-#def planificacion_cpu():
-    # print("[Simulación] Aquí iría el planificador FIFO o Round Robin.")
-    # Aquí podrías usar estructuras de datos y time.sleep()
-
 import time
 from collections import deque
 from logs import escribir_log

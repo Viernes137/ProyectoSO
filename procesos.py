@@ -1,9 +1,10 @@
-
 from login import get_usuario_actual, tiene_permisos_root
 from logs import escribir_log
 import random
 import time
 from datetime import datetime
+# Importar la función de agregar proceso del planificador
+from planificador import agregar_proceso
 
 # Diccionario para almacenar los procesos del sistema
 procesos_sistema = {}
@@ -54,6 +55,17 @@ def crear_proceso():
     comando = input("Comando/ruta del programa: ")
     prioridad = input("Prioridad (1-10, por defecto 5): ") or "5"
     
+    # Preguntar si se quiere agregar a la cola de planificación
+    agregar_planificacion = input("¿Agregar a la cola de planificación? (s/n, por defecto n): ").lower()
+    duracion = None
+    
+    if agregar_planificacion == 's':
+        try:
+            duracion = int(input("Duración estimada en segundos: "))
+        except ValueError:
+            duracion = 5  # Valor por defecto
+            print("Duración inválida, usando 5 segundos por defecto.")
+    
     try:
         prioridad = int(prioridad)
         if prioridad < 1 or prioridad > 10:
@@ -65,7 +77,7 @@ def crear_proceso():
     pid = contador_pid
     contador_pid += 1
     
-    # Crear el proceso
+    # Crear el proceso en el sistema
     proceso = {
         'pid': pid,
         'nombre': nombre,
@@ -76,12 +88,21 @@ def crear_proceso():
         'tiempo_inicio': datetime.now(),
         'cpu_uso': random.randint(1, 15),  # Simulación de uso de CPU
         'memoria_uso': random.randint(10, 500),  # MB de memoria
-        'procesos_hijos': []
+        'procesos_hijos': [],
+        'en_planificacion': agregar_planificacion == 's',
+        'duracion_estimada': duracion
     }
     
     procesos_sistema[pid] = proceso
-    escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario}")
-    print(f"Proceso '{nombre}' creado exitosamente con PID: {pid}")
+    
+    # Si se eligió agregar a planificación, agregarlo también al planificador
+    if agregar_planificacion == 's':
+        agregar_proceso(pid, nombre, duracion)
+        escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario} y agregado a planificación")
+        print(f"Proceso '{nombre}' creado exitosamente con PID: {pid} y agregado a la cola de planificación")
+    else:
+        escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario}")
+        print(f"Proceso '{nombre}' creado exitosamente con PID: {pid}")
 
 def listar_procesos():
     """Lista todos los procesos del sistema"""
@@ -93,14 +114,16 @@ def listar_procesos():
         return
     
     print("\n--- Lista de Procesos ---")
-    print(f"{'PID':<8} {'Nombre':<20} {'Usuario':<15} {'Estado':<12} {'CPU%':<6} {'Mem(MB)':<8} {'Prioridad'}")
-    print("-" * 85)
+    print(f"{'PID':<8} {'Nombre':<20} {'Usuario':<15} {'Estado':<12} {'CPU%':<6} {'Mem(MB)':<8} {'Prioridad':<10} {'Planif.'}")
+    print("-" * 95)
     
     for pid, proceso in procesos_sistema.items():
         # Solo mostrar procesos propios o si es root
         if es_root or proceso['propietario'] == usuario:
+            planif_status = "Sí" if proceso.get('en_planificacion', False) else "No"
             print(f"{proceso['pid']:<8} {proceso['nombre']:<20} {proceso['propietario']:<15} "
-                  f"{proceso['estado']:<12} {proceso['cpu_uso']:<6} {proceso['memoria_uso']:<8} {proceso['prioridad']}")
+                  f"{proceso['estado']:<12} {proceso['cpu_uso']:<6} {proceso['memoria_uso']:<8} "
+                  f"{proceso['prioridad']:<10} {planif_status}")
     
     escribir_log(f"{usuario} consultó la lista de procesos")
 
@@ -136,6 +159,10 @@ def ver_detalles_proceso():
     print(f"Tiempo de inicio: {proceso['tiempo_inicio'].strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Uso de CPU: {proceso['cpu_uso']}%")
     print(f"Uso de memoria: {proceso['memoria_uso']} MB")
+    print(f"En planificación: {'Sí' if proceso.get('en_planificacion', False) else 'No'}")
+    
+    if proceso.get('duracion_estimada'):
+        print(f"Duración estimada: {proceso['duracion_estimada']} segundos")
     
     if proceso['procesos_hijos']:
         print(f"Procesos hijos: {', '.join(map(str, proceso['procesos_hijos']))}")
@@ -313,6 +340,36 @@ def monitor_sistema():
     
     escribir_log(f"{usuario} usó el monitor del sistema")
 
+# Función para crear proceso simple desde el menú principal (compatibilidad con main.py)
+def crear_proceso_simple():
+    """Función simplificada para crear proceso desde main.py"""
+    global contador_pid
+    
+    nombre = input("Nombre del proceso: ")
+    usuario = get_usuario_actual()
+    pid = contador_pid
+    contador_pid += 1
+    
+    # Crear el proceso básico
+    proceso = {
+        'pid': pid,
+        'nombre': nombre,
+        'comando': f'/usr/bin/{nombre}',
+        'propietario': usuario,
+        'estado': 'ejecutando',
+        'prioridad': 5,
+        'tiempo_inicio': datetime.now(),
+        'cpu_uso': random.randint(1, 15),
+        'memoria_uso': random.randint(10, 500),
+        'procesos_hijos': [],
+        'en_planificacion': False,
+        'duracion_estimada': None
+    }
+    
+    procesos_sistema[pid] = proceso
+    escribir_log(f"Proceso '{nombre}' (PID: {pid}) creado por {usuario}")
+    print(f"Proceso '{nombre}' creado exitosamente con PID: {pid}")
+
 # Función para inicializar algunos procesos de ejemplo
 def inicializar_procesos_sistema():
     """Crea algunos procesos del sistema por defecto"""
@@ -336,7 +393,9 @@ def inicializar_procesos_sistema():
                 'tiempo_inicio': datetime.now(),
                 'cpu_uso': random.randint(1, 5),
                 'memoria_uso': random.randint(50, 200),
-                'procesos_hijos': []
+                'procesos_hijos': [],
+                'en_planificacion': False,
+                'duracion_estimada': None
             }
             procesos_sistema[contador_pid] = proceso
             contador_pid += 1

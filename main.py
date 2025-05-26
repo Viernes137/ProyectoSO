@@ -23,7 +23,7 @@ def main():
         opcion = mostrar_menu()
 
         if opcion == "1":
-            procesos.crear_proceso()
+            procesos.administrar_procesos()
         elif opcion == "2":
             planificador.planificar()
         elif opcion == "3":
