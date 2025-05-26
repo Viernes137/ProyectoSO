@@ -1,13 +1,6 @@
-
-
-#def administrar_archivos():
-    # print("[Simulación] Aquí iría el módulo de sistema de archivos y control de permisos.")
-    # Aquí podrías simular open(), read(), write(), close()
-
+import os
 from login import get_usuario_actual, tiene_permisos_root
 from logs import escribir_log
-
-archivos_sistema = {}
 
 def administrar_archivos():
     while True:
@@ -15,7 +8,7 @@ def administrar_archivos():
         print("1. Crear archivo")
         print("2. Leer archivo")
         print("3. Escribir archivo")
-        print("4. Cerrar archivo (simulado)")
+        print("4. Crear directorio")
         print("5. Volver al menú principal")
 
         opcion = input("Elige una opción: ")
@@ -27,56 +20,60 @@ def administrar_archivos():
         elif opcion == "3":
             escribir_archivo()
         elif opcion == "4":
-            cerrar_archivo()
+            crear_directorio()
         elif opcion == "5":
             break
         else:
             print("Opción no válida.")
 
 def crear_archivo():
-    nombre = input("Nombre del archivo: ")
-    propietario = get_usuario_actual()
+    ruta = input("Ruta del archivo (ej. carpeta/archivo.txt): ")
     contenido = input("Contenido inicial: ")
+    propietario = get_usuario_actual()
 
-    archivos_sistema[nombre] = {
-        'contenido': contenido,
-        'propietario': propietario,
-        'permisos': {'lectura': True, 'escritura': True}
-    }
+    # Asegura que el directorio exista
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
 
-    escribir_log(f"Archivo '{nombre}' creado por {propietario}.")
-    print(f"Archivo '{nombre}' creado exitosamente.")
+    # Crea el archivo
+    with open(ruta, 'w') as f:
+        f.write(contenido)
+
+    escribir_log(f"Archivo '{ruta}' creado por {propietario}.")
+    print(f"Archivo '{ruta}' creado exitosamente.")
 
 def leer_archivo():
-    nombre = input("Nombre del archivo a leer: ")
+    ruta = input("Ruta del archivo a leer: ")
     usuario = get_usuario_actual()
 
-    if nombre in archivos_sistema:
-        archivo = archivos_sistema[nombre]
-        if archivo['permisos']['lectura'] or usuario == archivo['propietario'] or tiene_permisos_root():
-            print(f"Contenido de '{nombre}': {archivo['contenido']}")
-            escribir_log(f"{usuario} leyó el archivo '{nombre}'.")
-        else:
-            print("No tienes permisos de lectura.")
-            escribir_log(f"ACCESO DENEGADO: {usuario} intentó leer '{nombre}'.")
+    if os.path.exists(ruta):
+        with open(ruta, 'r') as f:
+            contenido = f.read()
+            print(f"\nContenido de '{ruta}':\n{contenido}")
+            escribir_log(f"{usuario} leyó el archivo '{ruta}'.")
     else:
         print("Archivo no encontrado.")
+        escribir_log(f"{usuario} intentó leer un archivo inexistente: '{ruta}'.")
 
 def escribir_archivo():
-    nombre = input("Nombre del archivo a escribir: ")
+    ruta = input("Ruta del archivo a escribir: ")
     usuario = get_usuario_actual()
 
-    if nombre in archivos_sistema:
-        archivo = archivos_sistema[nombre]
-        if archivo['permisos']['escritura'] or usuario == archivo['propietario'] or tiene_permisos_root():
-            nuevo_texto = input("Texto a agregar: ")
-            archivo['contenido'] += f"\n{nuevo_texto}"
-            escribir_log(f"{usuario} escribió en el archivo '{nombre}'.")
-        else:
-            print("No tienes permisos de escritura.")
-            escribir_log(f"ACCESO DENEGADO: {usuario} intentó escribir en '{nombre}'.")
+    if os.path.exists(ruta):
+        nuevo_texto = input("Texto a agregar: ")
+        with open(ruta, 'a') as f:
+            f.write(f"\n{nuevo_texto}")
+        escribir_log(f"{usuario} escribió en el archivo '{ruta}'.")
     else:
         print("Archivo no encontrado.")
+        escribir_log(f"{usuario} intentó escribir en un archivo inexistente: '{ruta}'.")
 
-def cerrar_archivo():
-    print("Simulación: archivo cerrado correctamente.")
+def crear_directorio():
+    ruta = input("Ruta del nuevo directorio: ")
+    try:
+        os.makedirs(ruta, exist_ok=False)
+        print(f"Directorio '{ruta}' creado exitosamente.")
+        escribir_log(f"Directorio '{ruta}' creado por {get_usuario_actual()}.")
+    except FileExistsError:
+        print("El directorio ya existe.")
+        escribir_log(f"{get_usuario_actual()} intentó crear un directorio ya existente: '{ruta}'.")
+
